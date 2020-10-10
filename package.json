@@ -3,7 +3,7 @@
   "description": "HandBrake Encode Server",
   "version": "0.0.1",
   "homepage": "https://github.com/StrassLabs/handbrake-server",
-  "main": "index.js",
+  "main": "app.js",
   "author": "Andy Kellerstrass (https://strasslabs.com)",
   "contributors": [
     "Andy Kellerstrass (https://strasslabs.com)"
@@ -17,14 +17,28 @@
   },
   "license": "ISC",
   "scripts": {
-    "start": "node .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "tsc": "tsc",
+    "tsc:w": "tsc -w",
+    "start": "ts-node ./app.ts"
   },
   "keywords": [
     "HandBrake"
   ],
   "dependencies": {
+    "chokidar": "^3.4.2",
+    "config": "^3.3.2",
     "handbrake-js": "^5.0.0",
-    "lodash": "^4.17.20"
+    "lodash": "^4.17.20",
+    "tmp-promise": "^3.0.2",
+    "upath": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/chokidar": "^2.1.3",
+    "@types/config": "0.0.36",
+    "@types/node": "^14.11.8",
+    "lite-server": "^2.5.4",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.0.3"
   }
 }
