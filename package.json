@@ -1,0 +1,30 @@
+{
+  "name": "handbrake-server",
+  "description": "HandBrake Encode Server",
+  "version": "0.0.1",
+  "homepage": "https://github.com/StrassLabs/handbrake-server",
+  "main": "index.js",
+  "author": "Andy Kellerstrass (https://strasslabs.com)",
+  "contributors": [
+    "Andy Kellerstrass (https://strasslabs.com)"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/StrassLabs/handbrake-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/StrassLabs/handbrake-server/issues"
+  },
+  "license": "ISC",
+  "scripts": {
+    "start": "node .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "HandBrake"
+  ],
+  "dependencies": {
+    "handbrake-js": "^5.0.0",
+    "lodash": "^4.17.20"
+  }
+}
