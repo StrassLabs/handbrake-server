@@ -1,7 +1,8 @@
 import * as config from 'config';
 import * as upath from 'upath';
 import * as chokidar from 'chokidar';
-import { file } from 'tmp-promise';
+import { file as createTempFile } from 'tmp-promise';
+import { promises as fs } from 'fs';
 import { EventEmitter } from 'events';
 
 const hbjs = require('handbrake-js');
@@ -10,13 +11,19 @@ const hbjs = require('handbrake-js');
 
 // parse file paths
 
-// write file to temp file
 async function writeJobSettingsToTempFile(queueExportJob: Object): Promise<string> {
-  let tempFileName: string;
 
-  // todo: write temp file
-  tempFileName = './jobs/win_cli_test_video_02.json';
-  return tempFileName;
+  const tempFileOptions = {
+    prefix: 'hbjob-', // Temp file name prefix
+    postfix: '.json', // Temp file extension
+  };
+
+  const { path: tempFilePath } = await createTempFile(tempFileOptions);
+  console.info('tempFilePath', tempFilePath);
+
+  await fs.writeFile(tempFilePath, JSON.stringify(queueExportJob));
+
+  return tempFilePath;
 }
 
 async function loadQueueExport(queueExportFile: string): Promise<Object> {
