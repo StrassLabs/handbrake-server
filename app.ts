@@ -1,17 +1,53 @@
-import * as config from 'config';
-import * as upath from 'upath';
-import * as chokidar from 'chokidar';
+import config from 'config';
+import _ from 'lodash';
+import upath from 'upath';
+import chokidar from 'chokidar';
 import { file as createTempFile } from 'tmp-promise';
 import { promises as fs } from 'fs';
 import { EventEmitter } from 'events';
 
 const hbjs = require('handbrake-js');
 
+// interface EncodeJobConfig
+
+interface PathMapping {
+  remote: string;
+  local: string;
+}
 
 
-// parse file paths
+function mapFilePath(remotePath: string): string {
+  const mappings: PathMapping[] = config.get('pathMappings');
 
-async function writeJobSettingsToTempFile(queueExportJob: Object): Promise<string> {
+  const mappingMatch = <PathMapping>_.find(mappings, (mapping) => {
+    if (_.startsWith(remotePath, mapping.remote)) {
+      return mapping;
+    }
+  });
+
+  if (mappingMatch) {
+    let localPath: string;
+
+    localPath = _.replace(remotePath, mappingMatch.remote, mappingMatch.local);
+
+    return localPath;
+  }
+
+  return remotePath;
+}
+
+function normalizeFilePath(originalPath: string): string {
+
+  let fixedPath = upath.normalizeSafe(originalPath);
+  console.info('fixedPath', fixedPath);
+
+  let mappedPath = mapFilePath(fixedPath);
+  console.info('mappedPath', mappedPath);
+
+  return mappedPath;
+}
+
+async function writeJobSettingsToTempFile(queueExportJob: object): Promise<string> {
 
   const tempFileOptions = {
     prefix: 'hbjob-', // Temp file name prefix
@@ -26,15 +62,34 @@ async function writeJobSettingsToTempFile(queueExportJob: Object): Promise<strin
   return tempFilePath;
 }
 
-async function loadQueueExport(queueExportFile: string): Promise<Object> {
-  let encodeSettings: Object;
+function parseJobSettings(jobSettings: object): object {
+  // todo: data 'tegridy checking
 
-  let queueExport: Array<Object> = require(queueExportFile);
+  let originalSourcePath: string = _.get(jobSettings, 'Job.Source.Path');
+  let originalDestinationPath: string = _.get(jobSettings, 'Job.Destination.File');
+
+  console.info('originalSourcePath', originalSourcePath);
+  console.info('originalDestinationPath', originalDestinationPath);
+
+  let normalSourcePath = normalizeFilePath(originalSourcePath);
+  let normalDestinationPath = normalizeFilePath(originalDestinationPath);
+
+  console.info('normalSourcePath', normalSourcePath);
+  console.info('normalDestinationPath', normalDestinationPath);
+
+  return jobSettings;
+}
+
+async function loadQueueExport(queueExportFile: string): Promise<object> {
+  let encodeSettings: object;
+
+  let queueExport: Array<object> = require(queueExportFile);
 
   // console.log(queueExport[0]);
   // todo: modify job settings here
+  const parsedJobSettings = parseJobSettings(queueExport[0]);
 
-  const tempJobSettingsFile = await writeJobSettingsToTempFile(queueExport[0]);
+  const tempJobSettingsFile = await writeJobSettingsToTempFile(parsedJobSettings);
 
   console.info('tempJobSettingsFile', tempJobSettingsFile);
 
@@ -47,31 +102,38 @@ async function loadQueueExport(queueExportFile: string): Promise<Object> {
   return encodeSettings;
 }
 
+async function startEncode(encodeSettings: object): Promise<EventEmitter> {
+
+  const encJob = hbjs.spawn(encodeSettings);
+
+  encJob.on('error', (err: Error) => {
+    // invalid user input, no video found etc
+    console.error('[Error] %s', err);
+  });
+
+  return encJob;
+}
+
 async function main() {
 
-  let queueExportFile = './jobs/win_cli_test_video_02.json';
+  // let queueExportFile = './jobs/win_cli_test_video_02.json';
+  let queueExportFile = './jobs/windows_queue_export_cli.json';
 
   console.log('loading configuration');
 
   const encodeSettings = await loadQueueExport(queueExportFile);
 
-  console.log('starting encode');
+  // console.log('starting encode');
 
-  const jerb = hbjs.spawn(encodeSettings);
+  // const jerb = await startEncode(encodeSettings);
 
-  jerb.on('error', (err: Error) => {
-    // invalid user input, no video found etc
-    console.error('[Error] %s', err);
-  });
-
-  jerb.on('progress', (progress: any) => {
-    console.log(
-      'Percent complete: %s, ETA: %s',
-      progress.percentComplete,
-      progress.eta
-    );
-  });
-
+  // jerb.on('progress', (progress: any) => {
+  //   console.log(
+  //     'Percent complete: %s, ETA: %s',
+  //     progress.percentComplete,
+  //     progress.eta
+  //   );
+  // });
 }
 
 main();
