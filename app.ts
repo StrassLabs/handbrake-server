@@ -8,7 +8,28 @@ import { EventEmitter } from 'events';
 
 const hbjs = require('handbrake-js');
 
-// interface EncodeJobConfig
+
+interface EncodeSource {
+  Path: string;
+}
+
+interface EncodeDestination {
+  File: string;
+}
+
+interface EncodeVideoOptions {
+  Encoder: string;
+}
+
+interface JobConfigItem {
+  Source: EncodeSource;
+  Destination: EncodeDestination;
+  Video: EncodeVideoOptions;
+}
+
+interface JobConfig {
+  Job: JobConfigItem;
+}
 
 interface PathMapping {
   remote: string;
@@ -47,7 +68,7 @@ function normalizeFilePath(originalPath: string): string {
   return mappedPath;
 }
 
-async function writeJobSettingsToTempFile(queueExportJob: object): Promise<string> {
+async function writeJobSettingsToTempFile(queueExportJob: JobConfig): Promise<string> {
 
   const tempFileOptions = {
     prefix: 'hbjob-', // Temp file name prefix
@@ -62,11 +83,13 @@ async function writeJobSettingsToTempFile(queueExportJob: object): Promise<strin
   return tempFilePath;
 }
 
-function parseJobSettings(jobSettings: object): object {
+function parseJobSettings(jobSettings: JobConfig): JobConfig {
   // todo: data 'tegridy checking
 
-  let originalSourcePath: string = _.get(jobSettings, 'Job.Source.Path');
-  let originalDestinationPath: string = _.get(jobSettings, 'Job.Destination.File');
+  let originalSourcePath: string = jobSettings.Job.Source.Path;
+  let originalDestinationPath: string = jobSettings.Job.Destination.File;
+  // let originalSourcePath: string = _.get(jobSettings, 'Job.Source.Path');
+  // let originalDestinationPath: string = _.get(jobSettings, 'Job.Destination.File');
 
   console.info('originalSourcePath', originalSourcePath);
   console.info('originalDestinationPath', originalDestinationPath);
@@ -77,13 +100,16 @@ function parseJobSettings(jobSettings: object): object {
   console.info('normalSourcePath', normalSourcePath);
   console.info('normalDestinationPath', normalDestinationPath);
 
+  jobSettings.Job.Source.Path = normalSourcePath;
+  jobSettings.Job.Destination.File = normalDestinationPath;
+
   return jobSettings;
 }
 
 async function loadQueueExport(queueExportFile: string): Promise<object> {
   let encodeSettings: object;
 
-  let queueExport: Array<object> = require(queueExportFile);
+  let queueExport: JobConfig[] = require(queueExportFile);
 
   // console.log(queueExport[0]);
   // todo: modify job settings here
@@ -123,17 +149,18 @@ async function main() {
 
   const encodeSettings = await loadQueueExport(queueExportFile);
 
-  // console.log('starting encode');
+  console.log('starting encode');
 
-  // const jerb = await startEncode(encodeSettings);
+  const jerb = await startEncode(encodeSettings);
 
-  // jerb.on('progress', (progress: any) => {
-  //   console.log(
-  //     'Percent complete: %s, ETA: %s',
-  //     progress.percentComplete,
-  //     progress.eta
-  //   );
-  // });
+  jerb.on('progress', (progress: any) => {
+    console.log(
+      'Percent complete: %s, FPS: %s, ETA: %s',
+      progress.percentComplete,
+      progress.avgFps,
+      progress.eta,
+    );
+  });
 }
 
 main();
