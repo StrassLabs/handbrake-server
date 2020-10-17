@@ -140,14 +140,11 @@ async function startEncode(encodeSettings: object): Promise<EventEmitter> {
   return encJob;
 }
 
-async function main() {
-
-  // let queueExportFile = './jobs/win_cli_test_video_02.json';
-  let queueExportFile = './jobs/windows_queue_export_cli.json';
+async function handleNewJobFile(jobFilePath: string) {
 
   console.log('loading configuration');
 
-  const encodeSettings = await loadQueueExport(queueExportFile);
+  const encodeSettings = await loadQueueExport(jobFilePath);
 
   console.log('starting encode');
 
@@ -160,6 +157,31 @@ async function main() {
       progress.avgFps,
       progress.eta,
     );
+  });
+}
+
+function getJobDirGlob(): string {
+  const jobDir: string = config.get('jobDirectory');
+  const jobFileExt: string = config.get('jobFileExtension');
+
+  const watcherGlob: string = upath.joinSafe(jobDir, jobFileExt);
+
+  return watcherGlob;
+}
+
+
+async function main() {
+  const jobFileWatcher = chokidar.watch(getJobDirGlob(), {
+    persistent: true,
+  });
+
+  jobFileWatcher.on('add', (path, stats) => {
+
+    const notDumbPath = upath.normalizeSafe('./' + path);
+
+    console.info('new item found:', stats, notDumbPath);
+
+    handleNewJobFile(notDumbPath);
   });
 }
 

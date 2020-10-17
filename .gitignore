@@ -1,6 +1,7 @@
 # Custom
 jobs/*
 media/*
+config/*
 
 # Garbage
 .DS_Store
