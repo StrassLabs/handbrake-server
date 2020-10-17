@@ -2,6 +2,7 @@ import config from 'config';
 import _ from 'lodash';
 import upath from 'upath';
 import chokidar from 'chokidar';
+import * as LosslessJSON from 'lossless-json';
 import { file as createTempFile } from 'tmp-promise';
 import { promises as fs } from 'fs';
 import { EventEmitter } from 'events';
@@ -60,10 +61,8 @@ function mapFilePath(remotePath: string): string {
 function normalizeFilePath(originalPath: string): string {
 
   let fixedPath = upath.normalizeSafe(originalPath);
-  console.info('fixedPath', fixedPath);
 
   let mappedPath = mapFilePath(fixedPath);
-  console.info('mappedPath', mappedPath);
 
   return mappedPath;
 }
@@ -78,7 +77,7 @@ async function writeJobSettingsToTempFile(queueExportJob: JobConfig): Promise<st
   const { path: tempFilePath } = await createTempFile(tempFileOptions);
   console.info('tempFilePath', tempFilePath);
 
-  await fs.writeFile(tempFilePath, JSON.stringify(queueExportJob));
+  await fs.writeFile(tempFilePath, LosslessJSON.stringify(queueExportJob));
 
   return tempFilePath;
 }
@@ -88,8 +87,6 @@ function parseJobSettings(jobSettings: JobConfig): JobConfig {
 
   let originalSourcePath: string = jobSettings.Job.Source.Path;
   let originalDestinationPath: string = jobSettings.Job.Destination.File;
-  // let originalSourcePath: string = _.get(jobSettings, 'Job.Source.Path');
-  // let originalDestinationPath: string = _.get(jobSettings, 'Job.Destination.File');
 
   console.info('originalSourcePath', originalSourcePath);
   console.info('originalDestinationPath', originalDestinationPath);
@@ -109,10 +106,10 @@ function parseJobSettings(jobSettings: JobConfig): JobConfig {
 async function loadQueueExport(queueExportFile: string): Promise<object> {
   let encodeSettings: object;
 
-  let queueExport: JobConfig[] = require(queueExportFile);
+  let rawFile: string = await (await fs.readFile(queueExportFile)).toString();
 
-  // console.log(queueExport[0]);
-  // todo: modify job settings here
+  let queueExport: JobConfig[] = LosslessJSON.parse(rawFile);
+
   const parsedJobSettings = parseJobSettings(queueExport[0]);
 
   const tempJobSettingsFile = await writeJobSettingsToTempFile(parsedJobSettings);
