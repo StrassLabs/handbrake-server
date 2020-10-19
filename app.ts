@@ -147,14 +147,37 @@ async function handleNewJobFile(jobFilePath: string) {
 
   const jerb = await startEncode(encodeSettings);
 
+  jerb.on('start', () => {
+    console.info('start');
+  });
+
+  jerb.on('begin', () => {
+    console.info('begin');
+  });
+
   jerb.on('progress', (progress: any) => {
-    console.log(
-      'Percent complete: %s, FPS: %s, ETA: %s',
+
+    console.info(
+      '[%s] Percent complete: %s, FPS: %s, ETA: %s',
+      progress.taskNumber,
       progress.percentComplete,
       progress.avgFps,
       progress.eta,
     );
   });
+
+  jerb.on('end', () => {
+    console.info('end');
+  });
+
+  jerb.on('complete', () => {
+    console.info('complete');
+  });
+
+  jerb.on('cancelled', () => {
+    console.info('cancelled');
+  });
+
 }
 
 function getJobDirGlob(): string {
