@@ -172,6 +172,16 @@ async function handleNewJobFile(jobFilePath: string) {
 
   jerb.on('complete', () => {
     console.info('complete');
+
+    const completeJobFilePath = upath.joinSafe(
+      upath.dirname(jobFilePath) + '/complete',
+      upath.basename(jobFilePath),
+    );
+
+    fs.rename(
+      jobFilePath,
+      completeJobFilePath,
+    );
   });
 
   jerb.on('cancelled', () => {
@@ -197,7 +207,7 @@ async function main() {
 
   jobFileWatcher.on('add', (path, stats) => {
 
-    const notDumbPath = upath.normalizeSafe('./' + path);
+    const notDumbPath = upath.normalizeSafe(path);
 
     console.info('new item found:', stats, notDumbPath);
 
