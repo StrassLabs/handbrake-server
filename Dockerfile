@@ -26,11 +26,13 @@ RUN \
     bash \
     nasm \
     meson \
+    libsamplerate-dev \
+    libxml2-dev \
+    gtk+3.0-dev && \
+  apk add \
     numactl-dev \
     x264-dev \
     jansson-dev \
-    libxml2-dev \
-    libsamplerate-dev \
     libass-dev \
     libtheora-dev \
     lame-dev \
@@ -38,8 +40,7 @@ RUN \
     libvorbis-dev \
     speex-dev \
     libvpx-dev \
-    libva-dev \
-    gtk+3.0-dev && \
+    libva-dev && \
   # Build HandBrake
   git clone https://github.com/HandBrake/HandBrake.git && \
   cd HandBrake && \
@@ -49,7 +50,10 @@ RUN \
     --disable-gtk-update-checks \
     --enable-fdk-aac \
     --enable-x265 \
+    --enable-numa \
+    --enable-nvenc \
     --enable-qsv \
+    --enable-vce \
     --launch-jobs=$(nproc) \
     --launch \
     && \
