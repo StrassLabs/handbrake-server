@@ -1,7 +1,7 @@
 {
   "name": "handbrake-server",
   "description": "HandBrake Encode Server",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "homepage": "https://github.com/StrassLabs/handbrake-server",
   "main": "./src/app.ts",
   "author": "Andy Kellerstrass (https://strasslabs.com)",
