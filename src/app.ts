@@ -7,35 +7,10 @@ import { file as createTempFile } from 'tmp-promise';
 import { promises as fs } from 'fs';
 import { EventEmitter } from 'events';
 
+import { JobConfig } from './entities/EncodeJob';
+import { PathMapping } from './entities/AppConfig';
+
 const hbjs = require('handbrake-js');
-
-
-interface EncodeSource {
-  Path: string;
-}
-
-interface EncodeDestination {
-  File: string;
-}
-
-interface EncodeVideoOptions {
-  Encoder: string;
-}
-
-interface JobConfigItem {
-  Source: EncodeSource;
-  Destination: EncodeDestination;
-  Video: EncodeVideoOptions;
-}
-
-interface JobConfig {
-  Job: JobConfigItem;
-}
-
-interface PathMapping {
-  remote: string;
-  local: string;
-}
 
 
 function mapFilePath(remotePath: string): string {
