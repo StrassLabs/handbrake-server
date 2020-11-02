@@ -1,7 +1,5 @@
 FROM node:12.18-alpine
 
-ENV NODE_ENV ''
-
 # Stay in temp dir until build is complete
 WORKDIR /tmp
 
@@ -65,17 +63,27 @@ RUN \
 # Move to the app dir
 WORKDIR /usr/src/handbrake-server
 
-COPY ["package.json", "package-lock.json*", "npm-shrinkwrap.json*", "./"]
+COPY ["package.json", "package-lock.json*", "npm-shrinkwrap.json*", "tsconfig.json", "./"]
 RUN npm install --silent
 
+# Move configs into container
+COPY ["./config/default.js", "./config/custom-environment-variables.js", "./config/"]
+
 # Move source into container
-COPY ./ ./
+COPY ["./src/", "./src/"]
 
 RUN \
   # Compile code to JS
   npm run build && \
   # Purge dev packages used for compiling
-  npm prune --production --silent
+  npm prune --production --silent && \
+  # Delete source after compile
+  rm -r ./src
+
+ENV NODE_ENV="" \
+  HB_JOB_DIR="/jobs"
+
+VOLUME ["/jobs"]
 
 EXPOSE 5100
 CMD ["npm", "run", "server"]

@@ -1,3 +1,8 @@
+# Custom
+dist/**
+jobs/**
+media/**
+
 **/.classpath
 **/.dockerignore
 **/.env
