@@ -73,3 +73,18 @@ export function parseJobSettings(jobSettings: JobConfig): JobConfig {
 
   return jobSettings;
 }
+
+export async function loadJobFile(queueExportFile: string): Promise<string> {
+
+  let rawFile: string = await (await fs.readFile(queueExportFile)).toString();
+
+  let queueExport: JobConfig[] = LosslessJSON.parse(rawFile);
+
+  const parsedJobSettings = parseJobSettings(queueExport[0]);
+
+  const tempJobSettingsFile = await writeJobSettingsToTempFile(parsedJobSettings);
+
+  console.info('tempJobSettingsFile', tempJobSettingsFile);
+
+  return tempJobSettingsFile;
+}

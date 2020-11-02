@@ -2,7 +2,6 @@ import config from 'config';
 import _ from 'lodash';
 import upath from 'upath';
 import chokidar from 'chokidar';
-import * as LosslessJSON from 'lossless-json';
 import { promises as fs } from 'fs';
 import { EventEmitter } from 'events';
 
@@ -13,33 +12,11 @@ import {
   normalizeFilePath,
   writeJobSettingsToTempFile,
   parseJobSettings,
+  loadJobFile,
 } from './lib/Util';
 
 const hbjs = require('handbrake-js');
 
-
-
-async function loadQueueExport(queueExportFile: string): Promise<object> {
-  let encodeSettings: object;
-
-  let rawFile: string = await (await fs.readFile(queueExportFile)).toString();
-
-  let queueExport: JobConfig[] = LosslessJSON.parse(rawFile);
-
-  const parsedJobSettings = parseJobSettings(queueExport[0]);
-
-  const tempJobSettingsFile = await writeJobSettingsToTempFile(parsedJobSettings);
-
-  console.info('tempJobSettingsFile', tempJobSettingsFile);
-
-  encodeSettings = {
-    // input: './media/test_video_01.mp4',
-    // output: './media/converted/test_video_01.mkv',
-    'queue-import-file': tempJobSettingsFile,
-  };
-
-  return encodeSettings;
-}
 
 async function startEncode(encodeSettings: object): Promise<EventEmitter> {
 
@@ -57,7 +34,13 @@ async function handleNewJobFile(jobFilePath: string) {
 
   console.log('loading configuration');
 
-  const encodeSettings = await loadQueueExport(jobFilePath);
+  const loadedJobFile = await loadJobFile(jobFilePath);
+
+  let encodeSettings: object = {
+    // input: './media/test_video_01.mp4',
+    // output: './media/converted/test_video_01.mkv',
+    'queue-import-file': loadedJobFile,
+  };
 
   console.log('starting encode');
 
@@ -129,6 +112,8 @@ async function main() {
 
     handleNewJobFile(notDumbPath);
   });
+
+  console.log('watching for new job files :)');
 }
 
 main();
