@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  handbrake-server:
+    image: handbrake-server
+    container_name: handbrake-server
+    environment:
+      - HB_JOB_DIR=/jobs
+    ports:
+      - 5100:5100
+    volumes:
+      - ./config:/usr/src/handbrake-server/config
+      - ./jobs:/jobs
+      - ./media:/media
+    restart: unless-stopped
