@@ -4,12 +4,10 @@ services:
   handbrake-server:
     image: handbrake-server
     container_name: handbrake-server
-    environment:
-      - HB_JOB_DIR=/jobs
     ports:
       - 5100:5100
     volumes:
       - ./config:/usr/src/handbrake-server/config
-      - ./jobs:/jobs
-      - ./media:/media
+      - ${HB_HOST_JOB_DIR:-./jobs}:${HB_JOB_DIR:-/jobs}
+      - ${HB_HOST_MEDIA_DIR:-./media}:${HB_MEDIA_DIR:-/media}
     restart: unless-stopped
