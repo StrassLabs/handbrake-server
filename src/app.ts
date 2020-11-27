@@ -30,18 +30,6 @@ async function startEncode(encodeSettings: object): Promise<EventEmitter> {
   return encJob;
 }
 
-function throttled(delay: number, fn: (...args: any[]) => any) {
-  let lastCall = 0;
-  return function (...args: any[]) {
-    const now = (new Date).getTime();
-    if (now - lastCall < delay) {
-      return;
-    }
-    lastCall = now;
-    return fn(...args);
-  }
-}
-
 async function handleNewJobFile(jobFilePath: string) {
 
   console.log('loading configuration');
@@ -68,7 +56,7 @@ async function handleNewJobFile(jobFilePath: string) {
 
   const progressUpdateDelay: number = config.get('progressUpdateDelay');
 
-  jerb.on('progress', throttled(progressUpdateDelay, (progress: any) => {
+  jerb.on('progress', _.throttle((progress: any) => {
 
     console.info(
       '[%s] Percent complete: %s, FPS: %s, ETA: %s',
@@ -77,7 +65,7 @@ async function handleNewJobFile(jobFilePath: string) {
       progress.avgFps,
       progress.eta,
     );
-  }));
+  }, progressUpdateDelay));
 
   jerb.on('end', () => {
     console.info('end');
