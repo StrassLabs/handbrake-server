@@ -38,53 +38,63 @@ export function normalizeFilePath(originalPath: string): string {
   return mappedPath;
 }
 
-export async function writeJobSettingsToTempFile(queueExportJob: JobConfig): Promise<string> {
+export async function writeJobSettingsToTempFile(queueExportJobs: JobConfig[]): Promise<string[]> {
 
   const tempFileOptions = {
     prefix: 'hbjob-', // Temp file name prefix
     postfix: '.json', // Temp file extension
   };
 
-  const { path: tempFilePath } = await createTempFile(tempFileOptions);
-  console.info('tempFilePath', tempFilePath);
+  let tempFilePaths: string[] = [];
+  for await (const queueExportJob of queueExportJobs) {
+    const { path: tempFilePath } = await createTempFile(tempFileOptions);
+    console.info('tempFilePath', tempFilePath);
+    await fs.writeFile(tempFilePath, LosslessJSON.stringify(queueExportJob));
 
-  await fs.writeFile(tempFilePath, LosslessJSON.stringify(queueExportJob));
+    tempFilePaths.push(tempFilePath);
+  }
 
-  return tempFilePath;
+  return tempFilePaths;
 }
 
-export function parseJobSettings(jobSettings: JobConfig): JobConfig {
+export function parseJobSettings(jobSettings: JobConfig[]): JobConfig[] {
   // todo: data 'tegridy checking
 
-  let originalSourcePath: string = jobSettings.Job.Source.Path;
-  let originalDestinationPath: string = jobSettings.Job.Destination.File;
+  let outJobSettings: JobConfig[] = [];
 
-  console.info('originalSourcePath', originalSourcePath);
-  console.info('originalDestinationPath', originalDestinationPath);
+  jobSettings.forEach((config: JobConfig) => {
+    let originalSourcePath: string = config.Job.Source.Path;
+    let originalDestinationPath: string = config.Job.Destination.File;
+  
+    console.info('originalSourcePath', originalSourcePath);
+    console.info('originalDestinationPath', originalDestinationPath);
+  
+    let normalSourcePath = normalizeFilePath(originalSourcePath);
+    let normalDestinationPath = normalizeFilePath(originalDestinationPath);
+  
+    console.info('normalSourcePath', normalSourcePath);
+    console.info('normalDestinationPath', normalDestinationPath);
+  
+    config.Job.Source.Path = normalSourcePath;
+    config.Job.Destination.File = normalDestinationPath;
 
-  let normalSourcePath = normalizeFilePath(originalSourcePath);
-  let normalDestinationPath = normalizeFilePath(originalDestinationPath);
+    outJobSettings.push(config)
+  });
 
-  console.info('normalSourcePath', normalSourcePath);
-  console.info('normalDestinationPath', normalDestinationPath);
-
-  jobSettings.Job.Source.Path = normalSourcePath;
-  jobSettings.Job.Destination.File = normalDestinationPath;
-
-  return jobSettings;
+  return outJobSettings;
 }
 
-export async function loadJobFile(queueExportFile: string): Promise<string> {
+export async function loadJobFile(queueExportFile: string): Promise<string[]> {
 
   let rawFile: string = await (await fs.readFile(queueExportFile)).toString();
 
   let queueExport: JobConfig[] = LosslessJSON.parse(rawFile);
 
-  const parsedJobSettings = parseJobSettings(queueExport[0]);
+  const parsedJobSettings = parseJobSettings(queueExport);
 
-  const tempJobSettingsFile = await writeJobSettingsToTempFile(parsedJobSettings);
+  const tempJobSettingsFiles = await writeJobSettingsToTempFile(parsedJobSettings);
 
-  console.info('tempJobSettingsFile', tempJobSettingsFile);
+  console.info('tempJobSettingsFiles', tempJobSettingsFiles);
 
-  return tempJobSettingsFile;
+  return tempJobSettingsFiles;
 }
