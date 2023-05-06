@@ -1,4 +1,4 @@
-FROM node:12.18-alpine
+FROM node:18-alpine
 
 # Stay in temp dir until build is complete
 WORKDIR /tmp
@@ -32,17 +32,19 @@ RUN \
     x264-dev \
     jansson-dev \
     libass-dev \
+    libjpeg-turbo \
     libtheora-dev \
     lame-dev \
     opus-dev \
     libvorbis-dev \
     speex-dev \
     libvpx-dev \
-    libva-dev && \
+    libva-dev
+RUN \
   # Build HandBrake
   git clone https://github.com/HandBrake/HandBrake.git && \
   cd HandBrake && \
-  git checkout refs/tags/$(git tag -l | grep -E '^1\.3\.[0-9]+$' | tail -n 1) && \
+  git checkout refs/tags/$(git tag -l | grep -E '^1\.6\.[0-9]+$' | tail -n 1) && \
   ./configure --prefix=/usr \
     --disable-gtk \
     --disable-gtk-update-checks \
