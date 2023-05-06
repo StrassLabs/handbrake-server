@@ -49,7 +49,8 @@ export async function writeJobSettingsToTempFile(queueExportJobs: JobConfig[]): 
   for await (const queueExportJob of queueExportJobs) {
     const { path: tempFilePath } = await createTempFile(tempFileOptions);
     console.info('tempFilePath', tempFilePath);
-    await fs.writeFile(tempFilePath, LosslessJSON.stringify(queueExportJob));
+    const queueExportJobString = `${LosslessJSON.stringify(queueExportJob)}`;
+    await fs.writeFile(tempFilePath, queueExportJobString);
 
     tempFilePaths.push(tempFilePath);
   }
@@ -57,7 +58,7 @@ export async function writeJobSettingsToTempFile(queueExportJobs: JobConfig[]): 
   return tempFilePaths;
 }
 
-export function parseJobSettings(jobSettings: JobConfig[]): JobConfig[] {
+export function parseJobSettings(jobSettings: any): JobConfig[] {
   // todo: data 'tegridy checking
 
   let outJobSettings: JobConfig[] = [];
@@ -88,7 +89,7 @@ export async function loadJobFile(queueExportFile: string): Promise<string[]> {
 
   let rawFile: string = await (await fs.readFile(queueExportFile)).toString();
 
-  let queueExport: JobConfig[] = LosslessJSON.parse(rawFile);
+  let queueExport = LosslessJSON.parse(rawFile);
 
   const parsedJobSettings = parseJobSettings(queueExport);
 

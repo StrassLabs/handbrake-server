@@ -4,23 +4,14 @@ import upath from 'upath';
 import chokidar from 'chokidar';
 import { promises as fs } from 'fs';
 import { EventEmitter } from 'events';
+import { loadJobFile } from './lib/Util';
 
-import { JobConfig } from './entities/EncodeJob';
-
-import {
-  mapFilePath,
-  normalizeFilePath,
-  writeJobSettingsToTempFile,
-  parseJobSettings,
-  loadJobFile,
-} from './lib/Util';
-
-const hbjs = require('handbrake-js');
+import { spawn, HandbrakeOptions } from 'handbrake-js';
 
 
-async function startEncode(encodeSettings: object): Promise<EventEmitter> {
+async function startEncode(encodeSettings: HandbrakeOptions): Promise<EventEmitter> {
 
-  const encJob = hbjs.spawn(encodeSettings);
+  const encJob = spawn(encodeSettings);
 
   encJob.on('error', (err: Error) => {
     // invalid user input, no video found etc
@@ -39,9 +30,7 @@ async function handleNewJobFile(jobFilePath: string) {
   const maxConcurrentJerbs: number = config.get('maxConcurrentJobsInQueue');
   let inProgressJerbs = 0;
   for await (const loadedJobFile of loadedJobFiles) {
-    let encodeSettings: object = {
-      // input: './media/test_video_01.mp4',
-      // output: './media/converted/test_video_01.mkv',
+    let encodeSettings: HandbrakeOptions = {
       'queue-import-file': loadedJobFile,
     };
     
